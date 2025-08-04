@@ -4,12 +4,12 @@
 
 import * as THREE from "three";
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls } from "@react-three/drei";
 
 export default function ThreejsScene() {
   const uniforms = {
-    colorB: { type: 'vec3', value: new THREE.Color(0xACB6E5) },
-    colorA: { type: 'vec3', value: new THREE.Color(0x74ebd5) },
+    colorA: { type: 'vec3', value: new THREE.Color("red") },
+    colorB: { type: 'vec3', value: new THREE.Color("blue") },
   };
 
   const vertexShader = `
@@ -29,14 +29,13 @@ export default function ThreejsScene() {
     varying vec3 vUv;
 
     void main() {
-      gl_FragColor = vec4(mix(colorA, colorB, vUv.z), 1.0);
+      float factor = vUv.z + 0.5;
+      gl_FragColor = vec4(mix(colorA, colorB, factor), 1.0);
     }
   `;
 
   return (
-    <Canvas>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[0, 0, 5]} intensity={1} />
+    <Canvas style={{ background: "black" }}>
       <mesh>
         <boxGeometry args={[1, 1, 1]} />
         <shaderMaterial
@@ -48,6 +47,7 @@ export default function ThreejsScene() {
         />
       </mesh>
       <OrbitControls />
+      <axesHelper />
     </Canvas>
   );
 }
