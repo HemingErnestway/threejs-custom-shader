@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
-export function ThreejsScene() {
+export default function ThreejsScene() {
   const uniforms = {
     colorB: { type: 'vec3', value: new THREE.Color(0xACB6E5) },
     colorA: { type: 'vec3', value: new THREE.Color(0x74ebd5) },
