@@ -3,13 +3,15 @@
 "use client";
 
 import * as THREE from "three";
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+import { useRef } from "react";
 
-export default function ThreejsScene() {
+function Cube() {
   const uniforms = {
-    colorA: { type: 'vec3', value: new THREE.Color("red") },
-    colorB: { type: 'vec3', value: new THREE.Color("blue") },
+    uColorA: { value: new THREE.Color("red") },
+    uColorB: { value: new THREE.Color("blue") },
+    uTime: { value: 0 },
   };
 
   const vertexShader = `
@@ -24,28 +26,45 @@ export default function ThreejsScene() {
   `;
 
   const fragmentShader = `
-    uniform vec3 colorA; 
-    uniform vec3 colorB; 
+    uniform vec3 uColorA; 
+    uniform vec3 uColorB; 
+    uniform float uTime;
+    
     varying vec3 vUv;
 
     void main() {
-      float factor = vUv.z + 0.5;
-      gl_FragColor = vec4(mix(colorA, colorB, factor), 1.0);
+      float timeFactor = vUv.z + 0.5 + sin(uTime) * 0.5;
+      vec3 color = mix(uColorA, uColorB, timeFactor);
+      
+      gl_FragColor = vec4(color, 1.0);
     }
   `;
 
+  const shaderRef = useRef(null);
+
+  useFrame(state => {
+    if (shaderRef.current) {
+      shaderRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+    }
+  });
+
+  return (
+    <mesh position={[0, 0, 0]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <shaderMaterial
+        ref={shaderRef}
+        uniforms={uniforms}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+      />
+    </mesh>
+  );
+}
+
+export default function ThreejsScene() {
   return (
     <Canvas style={{ background: "black" }}>
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <shaderMaterial
-          args={[{
-            uniforms: uniforms,
-            fragmentShader: fragmentShader,
-            vertexShader: vertexShader,
-          }]}
-        />
-      </mesh>
+      <Cube />
       <OrbitControls />
       <axesHelper />
     </Canvas>
