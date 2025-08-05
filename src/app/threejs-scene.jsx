@@ -2,14 +2,11 @@
 
 "use client";
 
-import gsap from "gsap";
 import * as THREE from "three";
-import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import gsap from "gsap";
+import { useEffect, useRef } from "react";
 
-function Cube() {
+export default function ThreejsScene() {
   const vertexShader = `
     varying vec3 vGlobalPosition;
     
@@ -49,56 +46,71 @@ function Cube() {
     }
   `;
 
-  const cubeRef = useRef(null);
+  const uniforms = THREE.UniformsUtils.merge([
+    THREE.UniformsLib["fog"],
+    {
+      uColorA: { value: new THREE.Color("yellow") },
+      uColorB: { value: new THREE.Color("hotpink") },
+    },
+  ]);
 
-  useGSAP(() => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color("#333333");
+    scene.fog = new THREE.Fog("#333333", 5, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000,
+    );
+
+    camera.position.set(10, 10, 10);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.ShaderMaterial({ uniforms, vertexShader, fragmentShader, fog: true });
+
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    function rotateCubeRandomly() {
+      const randomRotationRad = Math.floor(Math.random() * 360 - 180) * Math.PI / 180;  // [-180, 180]
+      const randomAxis = ["x", "y", "z"][Math.floor(Math.random() * 3)];
+
+      gsap.to(cube.rotation, {
+        [randomAxis]: randomRotationRad,
+      });
+    }
+
     gsap.timeline()
-      .to(cubeRef.current.position, { x: 5, z: 0, ease: "none" })
-      .to(cubeRef.current.position, { x: 5, z: 5, ease: "none" })
-      .to(cubeRef.current.position, { x: 0, z: 5, ease: "none" })
-      .to(cubeRef.current.position, { x: 0, z: 0, ease: "none" })
+      .to(cube.position, { x: 5, z: 0, ease: "none" })
+      .to(cube.position, { x: 5, z: 5, ease: "none" })
+      .to(cube.position, { x: 0, z: 5, ease: "none" })
+      .to(cube.position, { x: 0, z: 0, ease: "none" })
       .duration(4)
       .repeat(-1);
-  });
 
-  function rotateRandomly() {
-    const randomRotationRad = Math.floor(Math.random() * 360 - 180) * Math.PI / 180;  // [-180, 180]
-    const randomAxis = ["x", "y", "z"][Math.floor(Math.random() * 3)];
-
-    gsap.to(cubeRef.current.rotation, {
-      [randomAxis]: randomRotationRad,
+    return (() => {
+      renderer.dispose();
+      geometry.dispose();
+      material.dispose();
     });
-  }
+  }, []);
 
   return (
-    <mesh
-      ref={cubeRef}
-      onClick={rotateRandomly}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <shaderMaterial
-        uniforms={THREE.UniformsUtils.merge([
-          THREE.UniformsLib["fog"],
-          {
-            uColorA: { value: new THREE.Color("yellow") },
-            uColorB: { value: new THREE.Color("hotpink") },
-          },
-        ])}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        fog={false}
-      />
-    </mesh>
-  );
-}
-
-export default function ThreejsScene() {
-  return (
-    <Canvas style={{ background: "#333333" }}>
-      <Cube />
-      <OrbitControls />
-      <fog attach="fog" args={[0x333333, 10, 15]}/>
-      <axesHelper />
-    </Canvas>
+    <canvas ref={canvasRef} />
   );
 }
