@@ -2,58 +2,53 @@
 
 "use client";
 
-import * as THREE from "three";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 
 function Cube() {
-  const uniforms = {
-    uColorA: { value: new THREE.Color("red") },
-    uColorB: { value: new THREE.Color("blue") },
-    uTime: { value: 0 },
-  };
-
   const vertexShader = `
-    varying vec3 vUv; 
+    varying vec3 vGlobalPosition;
 
     void main() {
-      vUv = position; 
-
+      vec4 globalPosition = modelMatrix * vec4(position, 1.0);
       vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+      
+      vGlobalPosition = globalPosition.xyz;
       gl_Position = projectionMatrix * modelViewPosition; 
     }
   `;
 
   const fragmentShader = `
-    uniform vec3 uColorA; 
-    uniform vec3 uColorB; 
-    uniform float uTime;
+    varying vec3 vGlobalPosition;
     
-    varying vec3 vUv;
-
     void main() {
-      float timeFactor = vUv.z + 0.5 + sin(uTime) * 0.5;
-      vec3 color = mix(uColorA, uColorB, timeFactor);
+      float r = (vGlobalPosition.x + 0.5) / 5.0;
+      float g = 0.0;
+      float b = (vGlobalPosition.z + 0.5) / 5.0;
       
-      gl_FragColor = vec4(color, 1.0);
+      gl_FragColor = vec4(r, g, b, 1.0);
     }
   `;
 
-  const shaderRef = useRef(null);
+  const cubeRef = useRef(null);
 
-  useFrame(state => {
-    if (shaderRef.current) {
-      shaderRef.current.uniforms.uTime.value = state.clock.elapsedTime;
-    }
+  useGSAP(() => {
+    gsap.timeline()
+      .to(cubeRef.current.position, { x: 5, z: 0, ease: "none" })
+      .to(cubeRef.current.position, { x: 5, z: 5, ease: "none" })
+      .to(cubeRef.current.position, { x: 0, z: 5, ease: "none" })
+      .to(cubeRef.current.position, { x: 0, z: 0, ease: "none" })
+      .duration(4)
+      .repeat(-1);
   });
 
   return (
-    <mesh position={[0, 0, 0]}>
+    <mesh ref={cubeRef}>
       <boxGeometry args={[1, 1, 1]} />
       <shaderMaterial
-        ref={shaderRef}
-        uniforms={uniforms}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
       />
