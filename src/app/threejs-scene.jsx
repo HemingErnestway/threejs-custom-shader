@@ -31,17 +31,19 @@ function Cube() {
   `;
 
   const fragmentShader = `
+    uniform vec3 uColorA;
+    uniform vec3 uColorB;
+  
     varying vec3 vGlobalPosition;
     
     ${THREE.ShaderChunk["common"]}
     ${THREE.ShaderChunk["fog_pars_fragment"]}
     
     void main() {
-      float r = (vGlobalPosition.x + 0.5) / 5.0;
-      float g = 0.0;
-      float b = (vGlobalPosition.z + 0.5) / 5.0;
+      float x = sin(vGlobalPosition.x);
+      float z = cos(vGlobalPosition.z);
       
-      gl_FragColor = vec4(r, g, b, 1.0);
+      gl_FragColor = vec4(mix(uColorA, uColorB, x + z), 1.0);
       
       ${THREE.ShaderChunk["fog_fragment"]}
     }
@@ -75,10 +77,16 @@ function Cube() {
     >
       <boxGeometry args={[1, 1, 1]} />
       <shaderMaterial
-        uniforms={THREE.UniformsUtils.merge([THREE.UniformsLib["fog"]])}
+        uniforms={THREE.UniformsUtils.merge([
+          THREE.UniformsLib["fog"],
+          {
+            uColorA: { value: new THREE.Color("yellow") },
+            uColorB: { value: new THREE.Color("hotpink") },
+          },
+        ])}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
-        fog={true}
+        fog={false}
       />
     </mesh>
   );
