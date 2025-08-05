@@ -59,8 +59,20 @@ function Cube() {
       .repeat(-1);
   });
 
+  function rotateRandomly() {
+    const randomRotationRad = Math.floor(Math.random() * 360 - 180) * Math.PI / 180;  // [-180, 180]
+    const randomAxis = ["x", "y", "z"][Math.floor(Math.random() * 3)];
+
+    gsap.to(cubeRef.current.rotation, {
+      [randomAxis]: randomRotationRad,
+    });
+  }
+
   return (
-    <mesh ref={cubeRef}>
+    <mesh
+      ref={cubeRef}
+      onClick={rotateRandomly}
+    >
       <boxGeometry args={[1, 1, 1]} />
       <shaderMaterial
         uniforms={THREE.UniformsUtils.merge([THREE.UniformsLib["fog"]])}
